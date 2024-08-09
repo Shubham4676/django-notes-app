@@ -1,45 +1,45 @@
 pipeline {
-    
-    agent { 
-        node{
-            label "dev"
-            
-        }
-    }
+    agent any 
     
     stages{
-        stage("Clone Code"){
-            steps{
-                git url: "https://github.com/LondheShubham153/django-notes-app.git", branch: "main"
-                echo "Aaj toh LinkedIn Post bannta hai boss"
-            }
-        }
-        stage("Build & Test"){
-            steps{
-                sh "docker build . -t notes-app-jenkins:latest"
-            }
-        }
-        stage("Push to DockerHub"){
-            steps{
-                withCredentials(
-                    [usernamePassword(
-                        credentialsId:"dockerCreds",
-                        passwordVariable:"dockerHubPass", 
-                        usernameVariable:"dockerHubUser"
-                        )
-                    ]
-                ){
-                sh "docker image tag notes-app-jenkins:latest ${env.dockerHubUser}/notes-app-jenkins:latest"
-                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                sh "docker push ${env.dockerHubUser}/notes-app-jenkins:latest"
+        stage("Cleanup Workspace"){
+                steps {
+                cleanWs()
                 }
-            }
         }
         
-        stage("Deploy"){
-            steps{
-                sh "docker compose up -d"
+        stage("Clone-Code"){
+            steps {
+                echo "Cloning The Code"
+                git url:"https://github.com/Shubham4676/django-notes-app.git", branch: "main"
+                
             }
+            
+        }
+        stage("Build"){
+            steps {
+                echo "Building The Code"
+                sh "docker build -t shubham4467/my-note-app ."
+            }
+            
+        }
+        stage("Push to Docker Hub"){
+            steps {
+                echo "Pushing the Image to DockerHUb"
+                withCredentials([usernamePassword(credentialsId:"dockerhub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
+                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}" 
+                sh "docker push shubham4467/my-note-app"
+                }
+                
+            }
+            
+        }
+        stage("Deploy"){
+            steps {
+                echo "Deploying The Container"
+                sh "docker-compose down && docker-compose up -d"
+            }
+             
         }
     }
 }
